@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#176b55">
+  <title>سبد سبز | فروشگاه مواد غذایی</title>
+  <style>
+    :root{--green:#176b55;--dark:#173c35;--bg:#f5f7f5;--line:#e4e9e5;--muted:#66736c}
+    *{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:#202722}
+    header{background:var(--dark);color:white;padding:18px max(16px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px}
+    header h1{font-size:21px;margin:0}header p{margin:5px 0 0;color:#d4e4dc;font-size:13px}
+    button,input,select,textarea{font:inherit}button{border:0;border-radius:9px;padding:10px 14px;background:var(--green);color:white;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+    .cart-button{background:white;color:var(--dark);font-weight:bold}.wrap{max-width:1100px;margin:26px auto;padding:0 16px}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.tools input,.tools select,.checkout input,.checkout textarea{padding:12px;border:1px solid #d5ddd7;border-radius:9px;background:white}
+    .tools input{flex:1;min-width:190px}.tools select{min-width:165px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:15px}
+    .card,.panel{background:white;border:1px solid var(--line);border-radius:13px;padding:15px}.picture{height:120px;border-radius:10px;background:#edf5ef;display:grid;place-items:center;font-size:52px}
+    .card h2{font-size:17px;margin:13px 0 7px}.muted{color:var(--muted);font-size:13px}.price{font-weight:bold;margin:12px 0}.card button{width:100%;margin-top:11px}
+    .panel{margin-top:22px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.panel h2{font-size:19px}.cart-line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+    .qty{display:flex;align-items:center;gap:8px}.qty button{padding:5px 10px}.checkout{display:grid;gap:10px;max-width:520px}.checkout textarea{min-height:80px}.hidden{display:none}.notice{margin-top:14px;padding:13px;background:#e6f4eb;border-radius:9px;line-height:1.9;overflow-wrap:anywhere}footer{text-align:center;padding:25px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>🥬 سبد سبز</h1><p>فروشگاه ساده و مستقل مواد غذایی</p></div>
+    <button class="cart-button" onclick="showCart()">سبد خرید (<span id="cart-count">۰</span>)</button>
+  </header>
+  <main class="wrap">
+    <div class="tools">
+      <input id="search" type="search" placeholder="جست‌وجوی محصول…" oninput="renderProducts()">
+      <select id="category" onchange="renderProducts()">
+        <option value="">همه دسته‌ها</option><option>میوه و سبزیجات</option><option>لبنیات</option><option>نان و غلات</option><option>نوشیدنی</option><option>تنقلات</option>
+      </select>
+    </div>
+    <section id="products" class="grid" aria-live="polite"></section>
+    <section id="cart-panel" class="panel hidden">
+      <div class="row"><h2>سبد خرید</h2><button onclick="hideCart()">بستن</button></div>
+      <div id="cart-items"></div>
+      <p class="row"><strong>جمع کل</strong><strong id="cart-total"></strong></p>
+      <button onclick="showCheckout()">ادامه و ثبت سفارش</button>
+    </section>
+    <section id="checkout-panel" class="panel hidden">
+      <h2>اطلاعات تحویل سفارش</h2>
+      <form class="checkout" onsubmit="submitOrder(event)">
+        <input id="customer-name" required maxlength="100" placeholder="نام و نام خانوادگی">
+        <input id="customer-phone" required type="tel" maxlength="20" placeholder="شماره تماس">
+        <textarea id="customer-address" required maxlength="500" placeholder="نشانی تحویل"></textarea>
+        <button type="submit">ثبت سفارش</button>
+      </form>
+      <div id="order-message"></div>
+    </section>
+  </main>
+  <footer>این نسخه بدون کتابخانه و سرویس خارجی در مرورگر اجرا می‌شود.</footer>
+  <script>
+    const products = [
+      {id:1,name:"سیب قرمز",category:"میوه و سبزیجات",price:85000,unit:"هر کیلو",stock:20,icon:"🍎"},
+      {id:2,name:"گوجه‌فرنگی",category:"میوه و سبزیجات",price:65000,unit:"هر کیلو",stock:15,icon:"🍅"},
+      {id:3,name:"خیار",category:"میوه و سبزیجات",price:55000,unit:"هر کیلو",stock:18,icon:"🥒"},
+      {id:4,name:"شیر",category:"لبنیات",price:42000,unit:"بطری ۱ لیتری",stock:12,icon:"🥛"},
+      {id:5,name:"ماست",category:"لبنیات",price:58000,unit:"ظرف ۹۰۰ گرمی",stock:8,icon:"🥣"},
+      {id:6,name:"پنیر",category:"لبنیات",price:75000,unit:"بسته",stock:10,icon:"🧀"},
+      {id:7,name:"نان",category:"نان و غلات",price:25000,unit:"یک عدد",stock:30,icon:"🍞"},
+      {id:8,name:"برنج",category:"نان و غلات",price:180000,unit:"هر کیلو",stock:25,icon:"🍚"},
+      {id:9,name:"آب معدنی",category:"نوشیدنی",price:12000,unit:"بطری",stock:40,icon:"💧"},
+      {id:10,name:"آبمیوه",category:"نوشیدنی",price:38000,unit:"بطری",stock:14,icon:"🧃"},
+      {id:11,name:"چیپس",category:"تنقلات",price:35000,unit:"بسته",stock:18,icon:"🥔"},
+      {id:12,name:"خرما",category:"تنقلات",price:95000,unit:"بسته",stock:9,icon:"🌴"}
+    ];
+    let cart = JSON.parse(localStorage.getItem("sabz-cart") || "{}");
+    const money = n => new Intl.NumberFormat("fa-IR").format(n) + " تومان";
+    function saveCart(){localStorage.setItem("sabz-cart",JSON.stringify(cart));updateCount()}
+    function updateCount(){document.getElementById("cart-count").textContent=new Intl.NumberFormat("fa-IR").format(Object.values(cart).reduce((a,b)=>a+b,0))}
+    function renderProducts(){
+      const term=document.getElementById("search").value.trim().toLowerCase(),cat=document.getElementById("category").value;
+      const list=products.filter(p=>p.name.toLowerCase().includes(term)&&(!cat||p.category===cat));
+      document.getElementById("products").innerHTML=list.length?list.map(p=>`<article class="card"><div class="picture">${p.icon}</div><h2>${p.name}</h2><div class="muted">${p.category} · ${p.unit}</div><div class="price">${money(p.price)}</div><div class="muted">موجودی: ${new Intl.NumberFormat("fa-IR").format(p.stock)}</div><button onclick="addToCart(${p.id})" ${p.stock<=0?"disabled":""}>${p.stock>0?"افزودن به سبد":"ناموجود"}</button></article>`).join(""):"<p>محصولی پیدا نشد.</p>";
+    }
+    function addToCart(id){const p=products.find(x=>x.id===id);if((cart[id]||0)>=p.stock)return alert("موجودی این محصول کافی نیست.");cart[id]=(cart[id]||0)+1;saveCart();renderCart()}
+    function changeQty(id,amount){const p=products.find(x=>x.id===Number(id)),next=(cart[id]||0)+amount;if(next>p.stock)return alert("موجودی این محصول کافی نیست.");if(next<=0)delete cart[id];else cart[id]=next;saveCart();renderCart()}
+    function renderCart(){const entries=Object.entries(cart).filter(([id,qty])=>products.some(p=>p.id===Number(id))&&qty>0);document.getElementById("cart-items").innerHTML=entries.length?entries.map(([id,qty])=>{const p=products.find(x=>x.id===Number(id));return `<div class="cart-line"><span>${p.name} (${p.unit}) · ${money(p.price*qty)}</span><span class="qty"><button aria-label="کم کردن" onclick="changeQty(${id},-1)">−</button>${new Intl.NumberFormat("fa-IR").format(qty)}<button aria-label="زیاد کردن" onclick="changeQty(${id},1)">+</button></span></div>`}).join(""):"<p class='muted'>سبد خرید خالی است.</p>";const total=entries.reduce((sum,[id,qty])=>sum+products.find(p=>p.id===Number(id)).price*qty,0);document.getElementById("cart-total").textContent=money(total)}
+    function showCart(){document.getElementById("cart-panel").classList.remove("hidden");renderCart()}
+    function hideCart(){document.getElementById("cart-panel").classList.add("hidden")}
+    function showCheckout(){if(!Object.keys(cart).length)return alert("سبد خرید خالی است.");document.getElementById("checkout-panel").classList.remove("hidden");document.getElementById("checkout-panel").scrollIntoView({behavior:"smooth"})}
+    function submitOrder(event){event.preventDefault();if(!Object.keys(cart).length)return alert("سبد خرید خالی است.");const order={number:Date.now(),name:document.getElementById("customer-name").value.trim(),phone:document.getElementById("customer-phone").value.trim(),address:document.getElementById("customer-address").value.trim(),items:cart,total:Object.entries(cart).reduce((sum,[id,qty])=>sum+products.find(p=>p.id===Number(id)).price*qty,0),date:new Date().toLocaleString("fa-IR")};const orders=JSON.parse(localStorage.getItem("sabz-orders")||"[]");orders.push(order);localStorage.setItem("sabz-orders",JSON.stringify(orders));cart={};saveCart();renderCart();event.target.reset();document.getElementById("order-message").innerHTML=`<div class="notice">سفارش با موفقیت در همین مرورگر ثبت شد.<br>شماره سفارش: ${order.number}<br>مبلغ: ${money(order.total)}</div>`}
+    renderProducts();updateCount();
+  </script>
+</body>
+</html>
